@@ -3,7 +3,9 @@
  *
  * A legacy key is imported only when the new key does not exist. The imported
  * value is copied forward once; later legacy writes cannot keep feeding the new
- * shell, and Eagle Eyes Global never writes back into the old namespace.
+ * shell, and Eagle Eyes Global never writes back into the old namespace. Copy
+ * failure deliberately propagates instead of returning the legacy value: new
+ * code must not run from state that still belongs only to an old installation.
  */
 export function readMigratedStorage(currentKey, legacyKeys = [], storage) {
   const target = storage === undefined ? globalThis.localStorage : storage;

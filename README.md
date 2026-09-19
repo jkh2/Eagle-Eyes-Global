@@ -115,6 +115,18 @@ go only to the Eagle Eyes Global namespace. A read-only legacy browser debug
 alias remains for one transition so existing local tooling can be updated
 without creating two mutable stores.
 
+Browser-state migration fails closed: if a legacy value cannot be copied into
+the new namespace, the new shell does not keep consuming the old-owned key.
+Cache and log directories are renamed rather than copied. Deliberately rolling
+back to a pre-rebrand commit therefore starts that old version with a cold cache
+and a reset local provider-budget file unless the directories are manually
+renamed back first.
+
+Internal `gev:` DOM event names and a few QA seams remain protocol identifiers
+during this transition. They are not persistent storage keys or current product
+branding; changing them would add coordination risk without isolating old and
+new installations.
+
 ## Source lineage and license
 
 Eagle Eyes Global is derived from Bilawal Sidhu’s MIT-licensed
