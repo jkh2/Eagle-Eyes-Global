@@ -1131,7 +1131,7 @@ export function createGevActionRunner({
       return clearAnnotations(annotations);
     }
 
-    throw new Error(`Unknown GEV tool: ${name}`);
+    throw new Error(`Unknown Eagle Eyes tool: ${name}`);
   };
 }
 
@@ -3378,7 +3378,7 @@ async function getBasemapContext(
     );
     return {
       source: 'Google Photorealistic 3D Tiles / Cesium basemap',
-      hasGoogle3DTiles: Boolean(window.__godsEyeView?.tileset),
+      hasGoogle3DTiles: Boolean(window.__eagleEyesGlobal?.tileset),
       viewScale,
       viewportSamples: samples,
       viewportPlaces,
@@ -3443,7 +3443,7 @@ async function getBasemapContext(
   const nearbyPlaces = resolvedNearbyPlaces || [];
   return {
     source: 'Google Photorealistic 3D Tiles / Cesium basemap',
-    hasGoogle3DTiles: Boolean(window.__godsEyeView?.tileset),
+    hasGoogle3DTiles: Boolean(window.__eagleEyesGlobal?.tileset),
     viewScale,
     viewportSamples: samples,
     viewportPlaces,
@@ -3946,7 +3946,7 @@ function logSlowContext(startedAt, scope) {
   const durationMs = Math.round(performance.now() - startedAt);
   if (durationMs >= 500) {
     console.info(
-      `[GEV Voice] ${scope} scene context completed in ${durationMs}ms`,
+      `[Eagle Eyes Voice] ${scope} scene context completed in ${durationMs}ms`,
     );
   }
 }
@@ -3966,7 +3966,7 @@ function dominantValue(values) {
 function summarizeEntity(viewer, entity, { includeProperties = false } = {}) {
   const now = Cesium.JulianDate.now();
   if (entity.__gevContextId) {
-    const store = window.__gevContextStore;
+    const store = window.__eagleEyesContextStore;
     const record = store?.entities?.get(entity.__gevContextId);
     if (record) return summarizeContextRecord(record, { includeProperties });
   }

@@ -1507,6 +1507,30 @@ test('calibration v2 round-trip: writeCalibrationStoreV2 → readCalibrationStor
   assert.deepEqual(cam.values, entry.get('austin-42').values);
 });
 
+test('calibration v2 copies the legacy namespace forward once', () => {
+  const legacyKey = 'godsEyeView.cctv.calibration.v2';
+  const payload = JSON.stringify({
+    'legacy-cam': {
+      values: {
+        offsetNorthM: 1,
+        offsetEastM: 2,
+        headingDeg: 3,
+        pitchDeg: 4,
+        fovDeg: 5,
+        rangeScale: 1,
+        heightM: 6,
+      },
+      source: 'manual',
+      savedAt: 42,
+    },
+  });
+  const storage = fakeStorage({ [legacyKey]: payload });
+
+  assert.equal(readCalibrationStoreV2(storage).has('legacy-cam'), true);
+  assert.equal(storage.getItem(CCTV_CALIBRATION_STORAGE_KEY_V2), payload);
+  assert.equal(storage.getItem(legacyKey), payload);
+});
+
 test('calibration v2: removing an entry (reset) then re-writing produces an empty store', () => {
   const storage = fakeStorage();
   const entry = new Map([

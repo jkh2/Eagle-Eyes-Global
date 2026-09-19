@@ -5,8 +5,8 @@ dist
 screenshots/
 qa-shots/
 output/
-.gev-logs/
-.gev-cache/
+.eagle-eyes-logs/
+.eagle-eyes-cache/
 .DS_Store
 .gstack/
 3d-models/

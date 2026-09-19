@@ -34,6 +34,7 @@
     "exports": ["./server/providers/live"],
     "modules": [
       "server/providers/live.js",
+      "server/product-state-paths.js",
       "server/providers/common/http.js",
       "server/providers/common/query.js",
       "server/providers/aircraft/opensky.js",
@@ -83,6 +84,7 @@
     "exports": ["./server/providers/space"],
     "modules": [
       "server/providers/space.js",
+      "server/product-state-paths.js",
       "server/providers/space/celestrak.js",
       "server/providers/space/launch-library.js",
       "server/providers/common/http.js",
@@ -101,6 +103,7 @@
     "exports": ["./server/providers/terrain"],
     "modules": [
       "server/providers/terrain.js",
+      "server/product-state-paths.js",
       "src/data/terrainHeightsProxy.js"
     ],
     "external": []
@@ -113,7 +116,11 @@
   "traffic-provider": {
     "runtime": "node",
     "exports": ["./server/providers/traffic"],
-    "modules": ["server/providers/traffic.js", "src/data/tomtomTiles.js"],
+    "modules": [
+      "server/providers/traffic.js",
+      "server/product-state-paths.js",
+      "src/data/tomtomTiles.js"
+    ],
     "external": []
   },
   "traffic-source": {
@@ -129,7 +136,11 @@
   "firms-provider": {
     "runtime": "node",
     "exports": ["./server/providers/firms"],
-    "modules": ["server/providers/firms.js", "src/data/firmsCsv.js"],
+    "modules": [
+      "server/providers/firms.js",
+      "server/product-state-paths.js",
+      "src/data/firmsCsv.js"
+    ],
     "external": []
   },
   "gbfs-provider": {
@@ -197,6 +208,7 @@
       "server/providers/common/rate-limit.js",
       "server/providers/common/request.js",
       "server/providers/overpass.js",
+      "server/product-state-paths.js",
       "server/providers/overpass/cache.js",
       "server/providers/overpass/constants.js",
       "server/providers/overpass/geometry.js",
@@ -219,6 +231,7 @@
       "server/providers/common/query.js",
       "server/providers/common/rate-limit.js",
       "server/providers/military-installations.js",
+      "server/product-state-paths.js",
       "server/providers/military-installations/cache.js",
       "server/providers/military-installations/constants.js",
       "server/providers/military-installations/query.js",
@@ -259,6 +272,7 @@
       "server/providers/common/rate-limit.js",
       "server/providers/common/request.js",
       "server/providers/common/source-root.js",
+      "server/product-state-paths.js",
       "server/providers/openai.js",
       "server/providers/openai/constants.js",
       "server/providers/openai/debug-log.js",
@@ -474,6 +488,7 @@
   "ui-shell": {
     "exports": ["./ui/shell"],
     "modules": [
+      "src/productStorage.js",
       "src/app/stateChannel.js",
       "src/bloom.js",
       "src/cctvFocusPolicy.js",
@@ -638,6 +653,7 @@
   "scenes": {
     "exports": ["./scenes"],
     "modules": [
+      "src/productStorage.js",
       "src/scenes/nepalEvidencePack.js",
       "src/data/bhoteKoshiIncidentPlaces.js",
       "src/data/bhoteKoshiShotPaths.js",
@@ -700,6 +716,7 @@
   "civil-flights": {
     "exports": ["./layers/flights"],
     "modules": [
+      "src/productStorage.js",
       "src/data/aircraftClass.js",
       "src/data/aircraftIcons.js",
       "src/data/aircraftMeta.js",
@@ -738,6 +755,7 @@
   "military-flights": {
     "exports": ["./layers/military"],
     "modules": [
+      "src/productStorage.js",
       "src/data/aircraftClass.js",
       "src/data/aircraftIcons.js",
       "src/data/aircraftMeta.js",
@@ -773,6 +791,7 @@
   "aircraft-mechanics": {
     "exports": ["./aircraft"],
     "modules": [
+      "src/productStorage.js",
       "src/data/aircraftClass.js",
       "src/data/aircraftIcons.js",
       "src/data/aircraftMeta.js",
@@ -1001,6 +1020,7 @@
   "cctv-layer": {
     "exports": ["./layers/cctv"],
     "modules": [
+      "src/productStorage.js",
       "src/data/cctvCards.js",
       "src/data/cctvGizmo.js",
       "src/data/cctvLod.js",
@@ -1055,6 +1075,7 @@
   "radio-layer": {
     "exports": ["./layers/radio"],
     "modules": [
+      "src/productStorage.js",
       "src/data/iconOrientation.js",
       "src/data/layerState.js",
       "src/data/radioCountry.js",
@@ -1156,6 +1177,7 @@
       "./voice/realtime-session"
     ],
     "modules": [
+      "src/productStorage.js",
       "src/voice/realtimeController.js",
       "src/voice/realtimeBackend.js",
       "src/voice/control.js",
@@ -1200,6 +1222,7 @@
       "./standalone/catalog"
     ],
     "modules": [
+      "src/productStorage.js",
       "src/scenes/nepalEvidencePack.js",
       "src/data/bhoteKoshiEvent.js",
       "src/data/bhoteKoshiEmbeddedMedia.js",
@@ -1828,6 +1851,7 @@
   "application-layer-construction": {
     "exports": ["./application/layers"],
     "modules": [
+      "src/productStorage.js",
       "src/data/bhoteKoshiEvent.js",
       "src/data/bhoteKoshiEmbeddedMedia.js",
       "src/data/bhoteKoshiLocator.js",
@@ -2284,6 +2308,7 @@
   "ui-share-restoration": {
     "exports": ["./ui/share-restoration"],
     "modules": [
+      "src/productStorage.js",
       "src/data/installationFeedback.js",
       "src/data/layerState.js",
       "src/loadingFeedback.js",
@@ -2296,6 +2321,7 @@
   "ui-visual-settings": {
     "exports": ["./ui/visual-settings"],
     "modules": [
+      "src/productStorage.js",
       "src/bloom.js",
       "src/cockpitVisionPolicy.js",
       "src/contactsDetectionPolicy.js",
@@ -2320,6 +2346,7 @@
   "ui-panel-chrome": {
     "exports": ["./ui/panel-chrome"],
     "modules": [
+      "src/productStorage.js",
       "src/panelStackLayout.js",
       "src/ui/leftPanelRail.js",
       "src/ui/panelChrome.js",

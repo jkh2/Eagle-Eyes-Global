@@ -340,7 +340,7 @@ export async function fetchTxdotSnapshot(
     const upstream = await fetchImpl(parsed.toString(), {
       headers: {
         Accept: 'application/json',
-        'User-Agent': 'gods-eye-view-cctv-proxy/1.0',
+        'User-Agent': 'eagle-eyes-global-cctv-proxy/0.2',
       },
       signal: controller.signal,
       redirect: 'manual',
@@ -453,10 +453,10 @@ export function cctvUpstreamUserAgent(url) {
   try {
     return (
       CCTV_IMAGE_USER_AGENT_BY_HOST[new URL(url).hostname] ||
-      'gods-eye-view-cctv-proxy/1.0'
+      'eagle-eyes-global-cctv-proxy/0.2'
     );
   } catch {
-    return 'gods-eye-view-cctv-proxy/1.0';
+    return 'eagle-eyes-global-cctv-proxy/0.2';
   }
 }
 

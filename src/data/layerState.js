@@ -1,3 +1,5 @@
+import { readMigratedStorage, writeProductStorage } from '../productStorage.js';
+
 const VALID_DISPOSITIONS = new Set([
   'enabled-only',
   'enabled+options',
@@ -24,7 +26,8 @@ const TRACKING_ID_GRAMMAR = /^[0-9a-z~_-]{1,16}$/;
  */
 const MAX_ENABLED_LAYERS_CHARS = 64;
 const MAX_LAYER_OPTIONS_CHARS = 512;
-export const LAYER_STATE_STORAGE_KEY = 'gev:layer-state:v2';
+export const LAYER_STATE_STORAGE_KEY = 'eagle-eyes-global:layer-state:v2';
+export const LEGACY_LAYER_STATE_STORAGE_KEY = 'gev:layer-state:v2';
 export const LAYER_RESTORE_ORIGINS = Object.freeze({
   share: 'share-restore',
   local: 'local-restore',
@@ -738,7 +741,11 @@ export class LayerStateCoordinator {
       let stored = null;
       try {
         stored = parseStoredLayerState(
-          this.storage?.getItem?.(LAYER_STATE_STORAGE_KEY),
+          readMigratedStorage(
+            LAYER_STATE_STORAGE_KEY,
+            [LEGACY_LAYER_STATE_STORAGE_KEY],
+            this.storage,
+          ),
         );
       } catch {
         /* best effort */
@@ -901,7 +908,7 @@ export class LayerStateCoordinator {
     const serialized = serializeStoredLayerState(this._durableState);
     try {
       if (this.storage?.getItem?.(LAYER_STATE_STORAGE_KEY) !== serialized) {
-        this.storage?.setItem?.(LAYER_STATE_STORAGE_KEY, serialized);
+        writeProductStorage(LAYER_STATE_STORAGE_KEY, serialized, this.storage);
       }
     } catch {
       /* storage can be unavailable or quota-limited */

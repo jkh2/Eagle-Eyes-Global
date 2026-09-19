@@ -1,4 +1,4 @@
-const STORE_KEY = '__gevContextStore';
+const STORE_KEY = '__eagleEyesContextStore';
 
 function createStore() {
   return {

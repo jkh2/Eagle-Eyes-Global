@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { promises as fsp } from 'node:fs';
+import { resolveProductStateDir } from '../../product-state-paths.js';
 import {
   readResponseTextCapped,
   coalesceProxyRequest,
@@ -23,8 +24,7 @@ export function rocketLaunchesProxy() {
   const maxResponseBytes = 12 * 1024 * 1024;
   const maxDiskCacheBytes = 24 * 1024 * 1024;
   const cachePath = path.join(
-    process.cwd(),
-    '.gev-cache',
+    resolveProductStateDir(process.cwd(), 'cache'),
     'launch-library-2-v2.3.json',
   );
   let cache = null;
@@ -61,7 +61,7 @@ export function rocketLaunchesProxy() {
     res.writeHead(status, {
       'Content-Type': 'application/json',
       'Cache-Control': status === 200 ? 'public, max-age=900' : 'no-store',
-      'X-GEV-Cache': cacheState,
+      'X-Eagle-Eyes-Cache': cacheState,
     });
     res.end(body);
   }

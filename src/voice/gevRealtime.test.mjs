@@ -3015,6 +3015,24 @@ test('voice tier round-trips through storage', () => {
   assert.equal(readStoredVoiceTier(storage), 'standard');
 });
 
+test('legacy voice preferences copy forward and never receive new writes', () => {
+  const storage = fakeVoiceStorage({
+    'godsEyeView.voiceCost.tier': 'mini',
+    'godsEyeView.voiceCost.limits': '{"warnUsd":1,"capUsd":4}',
+  });
+  assert.equal(readStoredVoiceTier(storage), 'mini');
+  assert.deepEqual(readStoredVoiceLimits(storage), { warnUsd: 1, capUsd: 4 });
+  assert.equal(storage.dump()['eagleEyesGlobal.voiceCost.tier'], 'mini');
+  assert.equal(
+    storage.dump()['eagleEyesGlobal.voiceCost.limits'],
+    '{"warnUsd":1,"capUsd":4}',
+  );
+
+  writeStoredVoiceTier('standard', storage);
+  assert.equal(storage.dump()['eagleEyesGlobal.voiceCost.tier'], 'standard');
+  assert.equal(storage.dump()['godsEyeView.voiceCost.tier'], 'mini');
+});
+
 test('an unset or hand-edited tier reads back as standard', () => {
   assert.equal(readStoredVoiceTier(fakeVoiceStorage()), 'standard');
   assert.equal(
@@ -3030,7 +3048,7 @@ test('an unset or hand-edited tier reads back as standard', () => {
 test('writing a bogus tier persists the safe fallback, not the bogus value', () => {
   const storage = fakeVoiceStorage();
   assert.equal(writeStoredVoiceTier('turbo', storage), 'standard');
-  assert.equal(storage.dump()['godsEyeView.voiceCost.tier'], 'standard');
+  assert.equal(storage.dump()['eagleEyesGlobal.voiceCost.tier'], 'standard');
 });
 
 test('a storage that throws never breaks the mic', () => {
@@ -3075,7 +3093,7 @@ test('a disabled threshold survives the storage round-trip', () => {
   // sentinel is what makes disabling persist.
   const storage = fakeVoiceStorage();
   writeStoredVoiceLimits({ warnUsd: 0, capUsd: 0 }, storage);
-  const raw = storage.dump()['godsEyeView.voiceCost.limits'];
+  const raw = storage.dump()['eagleEyesGlobal.voiceCost.limits'];
   assert.ok(!raw.includes('null'), `must not persist null: ${raw}`);
   const restored = readStoredVoiceLimits(storage);
   assert.equal(restored.warnUsd, Infinity);
@@ -3551,7 +3569,7 @@ test('a typed command drops the old response’s queued follow-up confirmation',
   controller.setVoiceSpeaker = () => {};
   controller.recordUsage = () => {};
   controller.updateResponseState({ type: 'response.created', response: { id: 'resp_old' } });
-  controller.queueResponseCreate('Briefly confirm the completed GEV action once.');
+  controller.queueResponseCreate('Briefly confirm the completed Eagle Eyes action once.');
   assert.ok(controller.pendingResponseInstructions, 'a follow-up is queued behind the active response');
 
   controller.sendTextCommand('stop');

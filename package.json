@@ -1,18 +1,18 @@
 {
-  "name": "gods-eye-view",
+  "name": "eagle-eyes-global",
   "private": true,
-  "version": "0.1.1",
-  "description": "A real-time intelligence console for planet Earth \u2014 photorealistic 3D globe, live aircraft/ships/satellites/earthquakes/CCTV, and hands-free voice control. Runs in a browser.",
+  "version": "0.2.0",
+  "description": "An evidence-conscious geospatial workspace for humans and AI agents, built on a photorealistic globe and source-grounded public signals.",
   "type": "module",
   "license": "MIT",
-  "author": "Bilawal Sidhu",
-  "homepage": "https://github.com/bilawalsidhu/gods-eye-view#readme",
+  "author": "Eagle Eyes Global contributors",
+  "homepage": "https://github.com/jkh2/Eagle-Eyes-Global#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bilawalsidhu/gods-eye-view.git"
+    "url": "https://github.com/jkh2/Eagle-Eyes-Global.git"
   },
   "bugs": {
-    "url": "https://github.com/bilawalsidhu/gods-eye-view/issues"
+    "url": "https://github.com/jkh2/Eagle-Eyes-Global/issues"
   },
   "engines": {
     "node": ">=24.14.0 <25 || >=26 <27"

@@ -1,4 +1,4 @@
-// Wraps GEV's existing, headless-safe USGS earthquake source and analyst
+// Wraps Eagle Eyes's existing, headless-safe USGS earthquake source and analyst
 // record mapper — does not re-implement fetch or parsing logic.
 //
 // Two real things learned reading the upstream source directly (not assumed):

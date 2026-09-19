@@ -627,14 +627,14 @@ function windowThatFailsOnce() {
   let store;
   return {
     dispatchEvent() {},
-    get __gevContextStore() {
+    get __eagleEyesContextStore() {
       if (armed) {
         armed = false;
         throw new Error('post-processing failed');
       }
       return store;
     },
-    set __gevContextStore(value) { store = value; },
+    set __eagleEyesContextStore(value) { store = value; },
   };
 }
 

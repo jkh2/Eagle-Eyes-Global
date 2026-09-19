@@ -1,5 +1,5 @@
 import { readRealtimeSource } from './testSupport/readRealtimeSource.mjs';
-import { GEV_REALTIME_TOOLS } from '../server/providers/openai/tools.js';
+import { EEG_REALTIME_TOOLS } from '../server/providers/openai/tools.js';
 import { readShellSource } from './testSupport/readShellSource.mjs';
 import { expandApplicationHtml } from '../build/application-html.js';
 import { readLayerSource } from './testSupport/readLayerSource.mjs';
@@ -23,7 +23,7 @@ const realtime = readRealtimeSource();
 const voice = readFileSync(new URL('./voice/actionSchemas.js', import.meta.url), 'utf8') + '\n' + ['toolDescriptions', 'instructions'].map(name => readFileSync(new URL(`../server/providers/openai/${name}.js`, import.meta.url), 'utf8')).join('\n');
 const css = readStylesheet(new URL('../style.css', import.meta.url));
 
-function realtimeTools() { return GEV_REALTIME_TOOLS; }
+function realtimeTools() { return EEG_REALTIME_TOOLS; }
 
 test('Realtime schema exposes the authoritative 28-tool inventory', () => {
   const tools = realtimeTools();
@@ -188,7 +188,7 @@ test('no unchanged Realtime tool definition drifts silently', () => {
     .digest('hex')
     .slice(0, 16);
   // ALPR intentionally extends the two layer enums; retain the complete pin.
-  assert.equal(digest, '6963175a0c9a76de', 'an unchanged Realtime tool definition drifted');
+  assert.equal(digest, 'c83ad1481f129c63', 'an unchanged Realtime tool definition drifted');
 });
 
 test('Radio volume and mission speed share the Sharpen slider visual language', () => {

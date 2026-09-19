@@ -100,17 +100,17 @@ test('the browser User-Agent applies to the NSW image host only', async () => {
     cctvUpstreamUserAgent(
       'https://webcams.transport.nsw.gov.au.evil.test/x.jpeg',
     ),
-    'gods-eye-view-cctv-proxy/1.0',
+    'eagle-eyes-global-cctv-proxy/0.2',
   );
   assert.equal(
     cctvUpstreamUserAgent(
       'https://example.test/webcams.transport.nsw.gov.au/x.jpeg',
     ),
-    'gods-eye-view-cctv-proxy/1.0',
+    'eagle-eyes-global-cctv-proxy/0.2',
   );
   assert.equal(
     cctvUpstreamUserAgent('not a url'),
-    'gods-eye-view-cctv-proxy/1.0',
+    'eagle-eyes-global-cctv-proxy/0.2',
   );
 
   const seen = [];
@@ -126,7 +126,7 @@ test('the browser User-Agent applies to the NSW image host only', async () => {
       },
     },
   );
-  assert.deepEqual(seen, ['gods-eye-view-cctv-proxy/1.0']);
+  assert.deepEqual(seen, ['eagle-eyes-global-cctv-proxy/0.2']);
 });
 
 test('the frame path follows redirects within the host only', async () => {

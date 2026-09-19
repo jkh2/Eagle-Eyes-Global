@@ -59,10 +59,12 @@ import {
   stringifySceneDocument,
   SceneDocumentError,
 } from '../director/document.js';
+import { readMigratedStorage, writeProductStorage } from '../productStorage.js';
 
 /** @constant {string} localStorage key for the serialized project */
-const STORAGE_KEY = 'godsEyeView.sceneProject.v2';
-const STORAGE_CHECKPOINT_KEY = 'godsEyeView.sceneProject.checkpoint.v1';
+const STORAGE_KEY = 'eagleEyesGlobal.sceneProject.v2';
+const LEGACY_STORAGE_KEY = 'godsEyeView.sceneProject.v2';
+const STORAGE_CHECKPOINT_KEY = 'eagleEyesGlobal.sceneProject.checkpoint.v1';
 /**
  * Orchestrates deterministic cinematic scene playback.
  *
@@ -256,7 +258,7 @@ export class SceneDirector {
    */
   _loadProject() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = readMigratedStorage(STORAGE_KEY, [LEGACY_STORAGE_KEY]);
       if (!raw) return createDefaultProject();
       const project = normalizeProject(parseSceneDocument(raw));
       const installed = new Set(project.installedBuiltInSceneIds || []);
@@ -291,7 +293,7 @@ export class SceneDirector {
         try {
           const payload = JSON.stringify(project);
           parseSceneDocument(payload);
-          localStorage.setItem(STORAGE_KEY, payload);
+          writeProductStorage(STORAGE_KEY, payload);
         } catch (e) {
           // Keep the migrated in-memory project usable even if this origin
           // refuses persistence; the normal UI save path will surface errors.
@@ -321,7 +323,7 @@ export class SceneDirector {
     try {
       const payload = JSON.stringify(this._project);
       parseSceneDocument(payload);
-      localStorage.setItem(STORAGE_KEY, payload);
+      writeProductStorage(STORAGE_KEY, payload);
     } catch (e) {
       // Private browsing / block-all-cookies / quota-exceeded throws here. The
       // in-memory project stays usable this session, but persistence failed —
@@ -554,7 +556,7 @@ export class SceneDirector {
 
       const originalProject = deepClone(this._project);
       try {
-        localStorage.setItem(
+        writeProductStorage(
           STORAGE_CHECKPOINT_KEY,
           JSON.stringify(originalProject),
         );
@@ -863,7 +865,7 @@ export class SceneDirector {
 
     if (writeCheckpoint) {
       try {
-        localStorage.setItem(
+        writeProductStorage(
           STORAGE_CHECKPOINT_KEY,
           JSON.stringify(this._project),
         );

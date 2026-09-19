@@ -19,7 +19,7 @@ import {
   normalizeStackId,
 } from './gevActions.js';
 import { MAP_STACKS } from '../mapStackController.js';
-import { GEV_REALTIME_TOOLS } from '../../server/providers/openai/tools.js';
+import { EEG_REALTIME_TOOLS } from '../../server/providers/openai/tools.js';
 
 test('every live basemap is reachable by its own id — no enum value without a voice alias', () => {
   // B1 regression: a stack added to MAP_STACKS (and the set_map_stack enum)
@@ -37,7 +37,7 @@ test('every live basemap is reachable by its own id — no enum value without a 
   assert.equal(normalizeStackId('Esri'), 'esri-imagery');
   assert.equal(normalizeStackId('esri imagery'), 'esri-imagery');
   // And the voice tool's enum must equal the set of live ids — no drift either way.
-  const enumIds = GEV_REALTIME_TOOLS.find(tool => tool.name === 'set_map_stack').parameters.properties.stack.enum;
+  const enumIds = EEG_REALTIME_TOOLS.find(tool => tool.name === 'set_map_stack').parameters.properties.stack.enum;
   assert.deepEqual(
     [...enumIds].sort(),
     MAP_STACKS.map((s) => s.id).sort(),

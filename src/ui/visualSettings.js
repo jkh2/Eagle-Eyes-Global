@@ -32,7 +32,10 @@ import {
   shareCacheNeedsHeal,
   shareableDetectionState,
 } from '../contactsDetectionPolicy.js';
-const DETECTION_ALLOCATION_STORAGE_KEY = 'gev:detection-allocation:v1';
+import { readMigratedStorage, writeProductStorage } from '../productStorage.js';
+const DETECTION_ALLOCATION_STORAGE_KEY =
+  'eagle-eyes-global:detection-allocation:v1';
+const LEGACY_DETECTION_ALLOCATION_STORAGE_KEY = 'gev:detection-allocation:v1';
 
 /** Own visual preferences, detection overrides and display-control state. */
 export class VisualSettings {
@@ -201,7 +204,9 @@ export class VisualSettings {
     let storedDetectionAllocation = 'ELASTIC';
     try {
       storedDetectionAllocation =
-        localStorage.getItem(DETECTION_ALLOCATION_STORAGE_KEY) || 'ELASTIC';
+        readMigratedStorage(DETECTION_ALLOCATION_STORAGE_KEY, [
+          LEGACY_DETECTION_ALLOCATION_STORAGE_KEY,
+        ]) || 'ELASTIC';
     } catch {
       /* unavailable storage */
     }
@@ -559,7 +564,7 @@ export class VisualSettings {
     }
     if (persist) {
       try {
-        localStorage.setItem(DETECTION_ALLOCATION_STORAGE_KEY, normalized);
+        writeProductStorage(DETECTION_ALLOCATION_STORAGE_KEY, normalized);
       } catch {
         /* best effort */
       }

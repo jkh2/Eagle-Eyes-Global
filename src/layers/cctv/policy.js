@@ -79,6 +79,8 @@ export const CCTV_CALIBRATION_STORAGE_KEY_V1 =
 /** v2 store key. Entries: { values: <7-field calibration offsets>, source: 'manual', savedAt: <epoch ms> }. */
 
 export const CCTV_CALIBRATION_STORAGE_KEY_V2 =
+  'eagleEyesGlobal.cctv.calibration.v2';
+export const LEGACY_CCTV_CALIBRATION_STORAGE_KEY_V2 =
   'godsEyeView.cctv.calibration.v2';
 
 // H5: throttle for double-buffered canvas texture swaps (<=1Hz; each swap is a

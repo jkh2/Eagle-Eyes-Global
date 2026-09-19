@@ -2,9 +2,14 @@ import { createCalibrationGizmo } from '../../data/cctvGizmo.js';
 import {
   DEFAULT_CAMERA_CALIBRATION,
   CCTV_CALIBRATION_STORAGE_KEY_V2,
+  LEGACY_CCTV_CALIBRATION_STORAGE_KEY_V2,
   CALIBRATION_RANGE_FLOOR_M,
   LEGACY_CALIBRATION_RANGE_FLOOR_M,
 } from './policy.js';
+import {
+  readMigratedStorage,
+  writeProductStorage,
+} from '../../productStorage.js';
 
 export function createCalibration({
   state: layerState,
@@ -137,7 +142,11 @@ export function createCalibration({
     const map = new Map();
     if (!storage) return map;
     try {
-      const raw = storage.getItem(CCTV_CALIBRATION_STORAGE_KEY_V2);
+      const raw = readMigratedStorage(
+        CCTV_CALIBRATION_STORAGE_KEY_V2,
+        [LEGACY_CCTV_CALIBRATION_STORAGE_KEY_V2],
+        storage,
+      );
       if (!raw) return map;
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== 'object') return map;
@@ -189,7 +198,11 @@ export function createCalibration({
             : {}),
         };
       }
-      storage.setItem(CCTV_CALIBRATION_STORAGE_KEY_V2, JSON.stringify(payload));
+      writeProductStorage(
+        CCTV_CALIBRATION_STORAGE_KEY_V2,
+        JSON.stringify(payload),
+        storage,
+      );
     } catch {
       // storage unavailable
     }

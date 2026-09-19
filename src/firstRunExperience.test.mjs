@@ -1,6 +1,6 @@
 import { expandApplicationHtml } from '../build/application-html.js';
 import { readStylesheet } from './testSupport/readStylesheet.mjs';
-import { GEV_REALTIME_TOOLS } from '../server/providers/openai/tools.js';
+import { EEG_REALTIME_TOOLS } from '../server/providers/openai/tools.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,6 +11,8 @@ import {
   FIRST_RUN_MISSIONS,
   FIRST_RUN_SESSION_KEY,
   FIRST_RUN_STORAGE_KEY,
+  LEGACY_FIRST_RUN_SESSION_KEY,
+  LEGACY_FIRST_RUN_STORAGE_KEY,
   environmentalLabel,
   exclusiveSurfaceActive,
   rememberFirstRunSessionDismissed,
@@ -43,6 +45,30 @@ test('a fresh session receives the launcher, and keeps receiving it', () => {
   const returning = fresh();
   returning.sessionStorageRef = memoryStorage(FIRST_RUN_SESSION_KEY);
   assert.equal(shouldShowFirstRun(returning), true);
+});
+
+test('legacy first-run preferences are copied forward once', () => {
+  const durable = memoryStorage(LEGACY_FIRST_RUN_STORAGE_KEY, 'suppressed');
+  assert.equal(
+    shouldShowFirstRun({
+      storage: durable,
+      sessionStorageRef: memoryStorage(FIRST_RUN_SESSION_KEY),
+      location: { search: '' },
+    }),
+    false,
+  );
+  assert.equal(durable.getItem(FIRST_RUN_STORAGE_KEY), 'suppressed');
+
+  const session = memoryStorage(LEGACY_FIRST_RUN_SESSION_KEY, 'dismissed');
+  assert.equal(
+    shouldShowFirstRun({
+      storage: memoryStorage(FIRST_RUN_STORAGE_KEY),
+      sessionStorageRef: session,
+      location: { search: '' },
+    }),
+    false,
+  );
+  assert.equal(session.getItem(FIRST_RUN_SESSION_KEY), 'dismissed');
 });
 
 test('dismissal is session-scoped; only the checkbox suppresses durably', () => {
@@ -644,7 +670,7 @@ test('the DISPLAY rail starts collapsed on a first run, and a stored choice wins
   );
   // The first-run default may only apply when NOTHING is stored: a visitor who
   // opened the rail keeps it open, and one who closed it keeps it closed.
-  const block = ui.slice(ui.indexOf('stored = localStorage.getItem(this._panelCollapseStorageKey(panelId))'));
+  const block = ui.slice(ui.indexOf('stored = readMigratedStorage(this._panelCollapseStorageKey(panelId)'));
   const guard = block.slice(0, block.indexOf('panelEl.classList.toggle'));
   assert.match(guard, /if \(stored === '1'\) collapsed = true;/);
   assert.match(guard, /if \(stored === '0'\) collapsed = false;/);
@@ -661,11 +687,11 @@ test('the voice TOOL SCHEMA matches the pinned release — the mission mapping i
   // Canonical serialization pins every tool name, description, property and
   // ordering while allowing source formatting. Derived from the unchanged
   // release schema before formatting (the previous source-byte pin passed).
-  const block = JSON.stringify(GEV_REALTIME_TOOLS);
-  assert.equal(block.length, 26208, 'serialized tool schema length drifted');
+  const block = JSON.stringify(EEG_REALTIME_TOOLS);
+  assert.equal(block.length, 26238, 'serialized tool schema length drifted');
   assert.equal(
     crypto.createHash('sha256').update(block).digest('hex'),
-    '135d4ec66239777da34a8476cdf8348574421d7afd2e981cc3490909a5bc8686',
+    '5e12378b7db0891689cdb666652d4819d6e3c8af1f8fde04beaebca9e7aafe61',
     'the first-run missions must ride EXISTING tools: no schema edit, no cache bust',
   );
   const instructions = fs.readFileSync(new URL('../server/providers/openai/instructions.js', import.meta.url), 'utf8');
@@ -691,7 +717,7 @@ test('the voice TOOL SCHEMA matches the pinned release — the mission mapping i
 });
 
 test('every layer a mission drives is already in the shipped set_layer_visibility enum', () => {
-  const tool = GEV_REALTIME_TOOLS.find(tool => tool.name === 'set_layer_visibility');
+  const tool = EEG_REALTIME_TOOLS.find(tool => tool.name === 'set_layer_visibility');
   const allowedLayers = tool.parameters.properties.layerId.enum;
   const missionLayerIds = Object.values(FIRST_RUN_MISSIONS).flatMap((mission) => mission.layerIds || []);
   assert.ok(missionLayerIds.length > 0);

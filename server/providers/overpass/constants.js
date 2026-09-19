@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { resolveProductStateDir } from '../../product-state-paths.js';
 
 // ---------------------------------------------------------------------------
 // Overpass API proxy constants and cache state
@@ -14,7 +15,7 @@ import path from 'node:path';
  * answer is less query volume, not a new name.
  */
 const OVERPASS_USER_AGENT =
-  'gods-eye-view/0.1 (+https://github.com/bilawalsidhu/gods-eye-view)';
+  'EagleEyesGlobal/0.2 (+https://github.com/jkh2/Eagle-Eyes-Global; derived from GodsEyeView)';
 
 /** Ordered list of Overpass API mirrors; tried sequentially on failure/rate-limit. */
 const OVERPASS_UPSTREAMS = [
@@ -51,7 +52,10 @@ const OVERPASS_DISK_TTL_MS = 7 * 86_400_000;
 const OVERPASS_BOUNDARY_DISK_TTL_MS = 30 * 86_400_000;
 
 /** Disk-cache directory for Overpass responses. */
-const OVERPASS_DISK_DIR = path.join(process.cwd(), '.gev-cache', 'overpass');
+const OVERPASS_DISK_DIR = path.join(
+  resolveProductStateDir(process.cwd(), 'cache'),
+  'overpass',
+);
 
 /** Per-upstream fetch timeout (ms). */
 const OVERPASS_TIMEOUT_MS = 22000;

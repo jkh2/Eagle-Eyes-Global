@@ -2,11 +2,12 @@ import { defaultSourceRoot } from '../common/source-root.js';
 import path from 'node:path';
 import { readRequestBody } from '../common/request.js';
 import fs from 'node:fs';
+import { resolveProductStateDir } from '../../product-state-paths.js';
 
 const REALTIME_DEBUG_LOG_MAX_BYTES = 8 * 1024 * 1024;
 
 function createDebugLogHandler({ sourceRoot = defaultSourceRoot } = {}) {
-  const REALTIME_DEBUG_LOG_DIR = path.join(sourceRoot, '.gev-logs');
+  const REALTIME_DEBUG_LOG_DIR = resolveProductStateDir(sourceRoot, 'logs');
   const REALTIME_DEBUG_LOG_FILE = path.join(
     REALTIME_DEBUG_LOG_DIR,
     'realtime-conversations.jsonl',

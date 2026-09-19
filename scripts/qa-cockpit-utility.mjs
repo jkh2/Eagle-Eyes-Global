@@ -166,7 +166,7 @@ try {
   };
   page.on('request', routeQaRequest);
   await page.goto(appUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-  await page.waitForFunction(() => window.__godsEyeView?.styleManager, { timeout: 60_000 });
+  await page.waitForFunction(() => window.__eagleEyesGlobal?.styleManager, { timeout: 60_000 });
   await page.waitForFunction(
     () => document.getElementById('loading-screen')?.classList.contains('hidden'),
     { timeout: 60_000 },
@@ -176,7 +176,7 @@ try {
     && typeof window.__gevQaUnregisterLayer === 'function'
   ));
   await page.evaluate(() => {
-    const manager = window.__godsEyeView.styleManager;
+    const manager = window.__eagleEyesGlobal.styleManager;
     const hud = document.getElementById('cockpit-hud');
     const signal = document.getElementById('cockpit-signal-stream');
     window.__qaCockpitUtilityPrior = {
@@ -190,7 +190,7 @@ try {
     };
   });
   const contactMissionHandoff = await page.evaluate(async () => {
-    const { styleManager, dataManager } = window.__godsEyeView;
+    const { styleManager, dataManager } = window.__eagleEyesGlobal;
     const originalShowToast = styleManager._showToast;
     const toasts = [];
     styleManager._showToast = (message) => { toasts.push(String(message)); };
@@ -229,8 +229,8 @@ try {
     JSON.stringify(contactMissionHandoff),
   );
   const cancelledMissionEntry = await page.evaluate(async () => {
-    const styleManager = window.__godsEyeView.styleManager;
-    const dataManager = window.__godsEyeView.dataManager;
+    const styleManager = window.__eagleEyesGlobal.styleManager;
+    const dataManager = window.__eagleEyesGlobal.dataManager;
     const rocketEntry = dataManager.layers.get('rocket-launches');
     if (!rocketEntry || dataManager.isEffectivelyEnabled('rocket-launches')) {
       return { exercised: false, reason: 'Space Missions was not in a clean OFF state' };
@@ -344,8 +344,8 @@ try {
     JSON.stringify(cancelledMissionEntry.toasts || []),
   );
   const replacementMissionEntry = await page.evaluate(async () => {
-    const styleManager = window.__godsEyeView.styleManager;
-    const dataManager = window.__godsEyeView.dataManager;
+    const styleManager = window.__eagleEyesGlobal.styleManager;
+    const dataManager = window.__eagleEyesGlobal.dataManager;
     const rocketEntry = dataManager.layers.get('rocket-launches');
     if (!rocketEntry || dataManager.isEffectivelyEnabled('rocket-launches')) {
       return { exercised: false, reason: 'Space Missions was not in a clean OFF state' };
@@ -447,8 +447,8 @@ try {
     JSON.stringify(replacementMissionEntry),
   );
   const supersededMissionEntry = await page.evaluate(async () => {
-    const styleManager = window.__godsEyeView.styleManager;
-    const dataManager = window.__godsEyeView.dataManager;
+    const styleManager = window.__eagleEyesGlobal.styleManager;
+    const dataManager = window.__eagleEyesGlobal.dataManager;
     const rocketEntry = dataManager.layers.get('rocket-launches');
     if (!rocketEntry || dataManager.isEffectivelyEnabled('rocket-launches')) {
       return { exercised: false, reason: 'Space Missions was not in a clean OFF state' };
@@ -541,7 +541,7 @@ try {
     JSON.stringify(supersededMissionEntry),
   );
   const voiceMissionEntry = await page.evaluate(async () => {
-    const { dataManager, styleManager } = window.__godsEyeView;
+    const { dataManager, styleManager } = window.__eagleEyesGlobal;
     const siblingId = '__qa_voice_context_sibling__';
     const rocketEntry = dataManager.layers.get('rocket-launches');
     window.__gevQaRegisterLayer(dataManager, {
@@ -646,19 +646,19 @@ try {
       && !voiceMissionEntry.internalState.snapshotRetained,
     JSON.stringify(voiceMissionEntry),
   );
-  await page.evaluate(() => window.__godsEyeView.dataManager.setEnabled(
+  await page.evaluate(() => window.__eagleEyesGlobal.dataManager.setEnabled(
     'flights',
     true,
     { origin: 'user' },
   ));
   await page.waitForFunction(() => {
-    const layer = window.__godsEyeView?.dataManager?.layers?.get('flights')?.module;
+    const layer = window.__eagleEyesGlobal?.dataManager?.layers?.get('flights')?.module;
     return (layer?.getAllPositions?.(500) || []).some(
       (candidate) => Number(candidate.altitudeM) > 1_000,
     );
   }, { timeout: 60_000 });
   const tracked = await page.evaluate(() => {
-    const layer = window.__godsEyeView.dataManager.layers.get('flights')?.module;
+    const layer = window.__eagleEyesGlobal.dataManager.layers.get('flights')?.module;
     const candidates = layer?.getAllPositions?.(500) || [];
     const airborne = candidates.find((candidate) => Number(candidate.altitudeM) > 1_000);
     return {
@@ -668,11 +668,11 @@ try {
   });
   check('real airborne flight is tracked before Contacts activation', tracked.tracked, JSON.stringify(tracked));
   await page.waitForFunction(
-    () => Boolean(window.__godsEyeView.viewer.trackedEntity?.position),
+    () => Boolean(window.__eagleEyesGlobal.viewer.trackedEntity?.position),
     { timeout: 10_000 },
   );
   const preselectedContactAdoption = await page.evaluate(async () => {
-    const { styleManager, dataManager, viewer } = window.__godsEyeView;
+    const { styleManager, dataManager, viewer } = window.__eagleEyesGlobal;
     const flights = dataManager.layers.get('flights')?.module;
     await dataManager.setEnabled('military', true, { origin: 'programmatic' });
     const before = flights?.getTrackedInfo?.() || null;
@@ -848,10 +848,10 @@ try {
     const readinessUrl = new URL(appUrl);
     readinessUrl.searchParams.set('welcome', '0');
     await readinessPage.goto(readinessUrl.href, { waitUntil: 'domcontentloaded' });
-    await readinessPage.waitForFunction(() => window.__godsEyeView?.dataManager
+    await readinessPage.waitForFunction(() => window.__eagleEyesGlobal?.dataManager
       && document.getElementById('loading-screen')?.classList.contains('hidden'), { timeout: 60000 });
     await readinessPage.evaluate(async () => {
-      const manager = window.__godsEyeView.dataManager;
+      const manager = window.__eagleEyesGlobal.dataManager;
       await manager.setEnabled('flights', true, { origin: 'user' });
       if (!manager.layers.get('flights').module.trackById('aaa051')) {
         throw new Error('First-fetch fixture aircraft was not tracked');
@@ -861,7 +861,7 @@ try {
       }
     });
     deferredInstallationReadiness = await readinessPage.evaluate(async () => {
-      const { styleManager, dataManager } = window.__godsEyeView;
+      const { styleManager, dataManager } = window.__eagleEyesGlobal;
       const entry = dataManager.layers.get('military-installations');
       if (!entry?.module) return { exercised: false, reason: 'military-installations missing' };
       const settleWithin = (promise, ms) => Promise.race([
@@ -1057,7 +1057,7 @@ try {
     }),
   );
   const locationContactHandoff = await page.evaluate(async () => {
-    const { styleManager, dataManager, viewer } = window.__godsEyeView;
+    const { styleManager, dataManager, viewer } = window.__eagleEyesGlobal;
     const awareness = dataManager.layers.get('military-awareness')?.module;
     const before = awareness?.getContextSnapshot?.()?.subject || null;
     document.querySelector('#location-pills .location-pill')?.click();
@@ -1090,7 +1090,7 @@ try {
     JSON.stringify(locationContactHandoff),
   );
   const zoomedOutContactRefocus = await page.evaluate(async () => {
-    const { dataManager, viewer } = window.__godsEyeView;
+    const { dataManager, viewer } = window.__eagleEyesGlobal;
     const awareness = dataManager.layers.get('military-awareness')?.module;
     const before = awareness?.getContextSnapshot?.()?.subject || null;
     const entityBefore = viewer.trackedEntity;
@@ -1137,7 +1137,7 @@ try {
   await page.$eval('#cockpit-entry', (entry) => entry.click());
   await page.waitForFunction(
     () => document.body.classList.contains('cockpit-mode')
-      && window.__godsEyeView.styleManager.cockpitView.active
+      && window.__eagleEyesGlobal.styleManager.cockpitView.active
       && !document.getElementById('cockpit-hud').hidden,
     { timeout: 10_000 },
   );
@@ -1151,7 +1151,7 @@ try {
     { timeout: 10_000 },
   );
   const firstCockpitContact = await page.evaluate(() => {
-    const awareness = window.__godsEyeView.dataManager.layers
+    const awareness = window.__eagleEyesGlobal.dataManager.layers
       .get('military-awareness')?.module;
     const snapshot = awareness?.getContextSnapshot?.() || null;
     const context = document.getElementById('cockpit-context');
@@ -1197,7 +1197,7 @@ try {
   // context-mode transaction and the REAL CockpitViewController with a live
   // tracked flight: the one path a Node unit test cannot boot.
   const contactsDetection = await page.evaluate(async () => {
-    const { styleManager } = window.__godsEyeView;
+    const { styleManager } = window.__eagleEyesGlobal;
     const cockpit = styleManager.cockpitView;
     const mode = () => styleManager.getDetectionState().detectionMode;
     const density = () => styleManager.getDetectionState().densityPct;
@@ -1222,10 +1222,10 @@ try {
     const cleanupSnapshotCleared = styleManager._contextControls._contextSessionSnapshot === null;
     const cleanupBlockerId = '__qa_slow_contacts_sibling__';
     const cleanupUnregistered = await window.__gevQaUnregisterLayer(
-      window.__godsEyeView.dataManager,
+      window.__eagleEyesGlobal.dataManager,
       cleanupBlockerId,
     );
-    const cleanupBlockerAbsent = !window.__godsEyeView.dataManager.layers.has(cleanupBlockerId);
+    const cleanupBlockerAbsent = !window.__eagleEyesGlobal.dataManager.layers.has(cleanupBlockerId);
     // Adversarial precondition: detection explicitly OFF at a NON-tactical
     // density, and the operator already flagged as having overridden detection
     // this session — the flag that suppresses the military-style auto-enable.
@@ -1348,7 +1348,7 @@ try {
     JSON.stringify(contactsDetection),
   );
   const densityNavigation = await page.evaluate(async () => {
-    const { styleManager, dataManager, viewer } = window.__godsEyeView;
+    const { styleManager, dataManager, viewer } = window.__eagleEyesGlobal;
     const cockpit = styleManager.cockpitView;
     const awareness = dataManager.layers.get('military-awareness')?.module;
     const settle = (ms = 260) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -1443,7 +1443,7 @@ try {
     JSON.stringify(densityNavigation),
   );
   const cockpitExitOwnership = await page.evaluate(async () => {
-    const { styleManager, dataManager, viewer } = window.__godsEyeView;
+    const { styleManager, dataManager, viewer } = window.__eagleEyesGlobal;
     const awareness = dataManager.layers.get('military-awareness')?.module;
     const entity = viewer.trackedEntity || styleManager.cockpitView.trackedEntity;
     const nextFrame = () => new Promise((resolve, reject) => {
@@ -1484,7 +1484,7 @@ try {
     JSON.stringify(cockpitExitOwnership),
   );
   const cockpitPanelRoundTrip = await page.evaluate(async () => {
-    const manager = window.__godsEyeView.styleManager;
+    const manager = window.__eagleEyesGlobal.styleManager;
     const panelIds = [
       'data-panel',
       'cctv-panel',
@@ -1558,17 +1558,17 @@ try {
   await page.$eval('#cockpit-entry', (entry) => entry.click());
   await page.waitForFunction(
     () => document.body.classList.contains('cockpit-mode')
-      && window.__godsEyeView.styleManager.cockpitView.active,
+      && window.__eagleEyesGlobal.styleManager.cockpitView.active,
     { timeout: 10_000 },
   );
   await page.evaluate(() => {
-    const manager = window.__godsEyeView.styleManager;
+    const manager = window.__eagleEyesGlobal.styleManager;
     manager._setCockpitDisclosure('display', false);
     manager._setCockpitDisclosure('radio', false);
   });
 
   const visionCycle = await page.evaluate(async () => {
-    const manager = window.__godsEyeView.styleManager;
+    const manager = window.__eagleEyesGlobal.styleManager;
     const cockpit = manager.cockpitView;
     const current = document.getElementById('cockpit-vision-current');
     const label = document.getElementById('cockpit-vision-current-label');
@@ -1640,12 +1640,12 @@ try {
       && visionCycle.restoredNoir?.intensity === 1,
     JSON.stringify(visionCycle),
   );
-  await page.evaluate(() => window.__godsEyeView.styleManager.cockpitView.setVisionMode('noir'));
+  await page.evaluate(() => window.__eagleEyesGlobal.styleManager.cockpitView.setVisionMode('noir'));
   await page.screenshot({ path: path.join(shotsDir, 'vision-noir.png') });
-  await page.evaluate(() => window.__godsEyeView.styleManager.cockpitView.setVisionMode('optical'));
+  await page.evaluate(() => window.__eagleEyesGlobal.styleManager.cockpitView.setVisionMode('optical'));
 
   const desktopState = async (variant, openKind) => page.evaluate(async ({ variantName, kind }) => {
-    const manager = window.__godsEyeView.styleManager;
+    const manager = window.__eagleEyesGlobal.styleManager;
     const hud = document.getElementById('cockpit-hud');
     const signal = document.getElementById('cockpit-signal-stream');
     const utility = document.getElementById('cockpit-utility-controls');
@@ -1729,12 +1729,12 @@ try {
   check(
     'roomy screenshot remains in a real Cockpit session',
     await page.evaluate(() => document.body.classList.contains('cockpit-mode')
-      && window.__godsEyeView.styleManager.cockpitView.active
+      && window.__eagleEyesGlobal.styleManager.cockpitView.active
       && getComputedStyle(document.getElementById('cockpit-utility-controls')).display !== 'none'),
   );
 
   const portalScroll = await page.evaluate(async () => {
-    const manager = window.__godsEyeView.styleManager;
+    const manager = window.__eagleEyesGlobal.styleManager;
     const standard = document.getElementById('pp-toggles');
     const cockpit = document.getElementById('cockpit-display-panel');
     const waitFrames = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -1804,7 +1804,7 @@ try {
   );
 
   const boundary = await page.evaluate(() => {
-    const manager = window.__godsEyeView.styleManager;
+    const manager = window.__eagleEyesGlobal.styleManager;
     const hud = document.getElementById('cockpit-hud');
     const signal = document.getElementById('cockpit-signal-stream');
     const utility = document.getElementById('cockpit-utility-controls');
@@ -1944,7 +1944,7 @@ try {
   );
 
   const signalTransition = await page.evaluate(() => {
-    const manager = window.__godsEyeView.styleManager;
+    const manager = window.__eagleEyesGlobal.styleManager;
     const cockpit = manager.cockpitView;
     const signalToggle = document.getElementById('cockpit-signal-toggle');
     let expandedEvents = 0;
@@ -1997,7 +1997,7 @@ try {
     JSON.stringify(signalTransition),
   );
   const contextTransition = await page.evaluate(() => {
-    const cockpit = window.__godsEyeView.styleManager.cockpitView;
+    const cockpit = window.__eagleEyesGlobal.styleManager.cockpitView;
     const priorCollapsed = cockpit.contextCollapsed;
     const contextToggle = document.getElementById('cockpit-context-toggle');
     let expandedEvents = 0;
@@ -2029,7 +2029,7 @@ try {
   );
   // Use the real connected DOM to catch focus loss caused by moving live rows.
   const signalFocus = await page.evaluate(() => {
-    const cockpit = window.__godsEyeView.styleManager.cockpitView;
+    const cockpit = window.__eagleEyesGlobal.styleManager.cockpitView;
     const originalItems = cockpit.signalItems;
     const wasCollapsed = cockpit.signalCollapsed;
     cockpit.setSignalCollapsed(false);
@@ -2077,13 +2077,13 @@ try {
   check('attribution Escape restores focus and keeps Cockpit active', await page.evaluate(() => (
     document.activeElement?.classList.contains('cesium-credit-expand-link')
       && document.activeElement.getAttribute('aria-expanded') === 'false'
-      && window.__godsEyeView.styleManager.cockpitView.active
+      && window.__eagleEyesGlobal.styleManager.cockpitView.active
   )));
   await page.screenshot({ path: path.join(shotsDir, 'restored-desktop.png') });
   check(
     'restored screenshot remains in a real Cockpit session',
     await page.evaluate(() => document.body.classList.contains('cockpit-mode')
-      && window.__godsEyeView.styleManager.cockpitView.active
+      && window.__eagleEyesGlobal.styleManager.cockpitView.active
       && getComputedStyle(document.getElementById('cockpit-utility-controls')).display !== 'none'),
   );
   const desktopViewActions = await page.evaluate(() => {
@@ -2107,7 +2107,7 @@ try {
 
   await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
   const mobile = await page.evaluate(async () => {
-    const manager = window.__godsEyeView.styleManager;
+    const manager = window.__eagleEyesGlobal.styleManager;
     const hud = document.getElementById('cockpit-hud');
     const signal = document.getElementById('cockpit-signal-stream');
     const display = document.getElementById('cockpit-display-toggle-btn');
@@ -2148,7 +2148,7 @@ try {
   check(
     'mobile screenshot remains in a real Cockpit session',
     await page.evaluate(() => document.body.classList.contains('cockpit-mode')
-      && window.__godsEyeView.styleManager.cockpitView.active
+      && window.__eagleEyesGlobal.styleManager.cockpitView.active
       && getComputedStyle(document.getElementById('cockpit-utility-controls')).display !== 'none'),
   );
   const narrowViewActions = await page.evaluate(() => {
@@ -2172,8 +2172,8 @@ try {
 
   const resetResult = await page.evaluate(() => {
     // Both the UI and compatibility facade delegate to this navigation owner.
-    const manager = window.__godsEyeView.styleManager._locationNavigation;
-    const awareness = window.__godsEyeView.dataManager.layers.get('military-awareness')?.module;
+    const manager = window.__eagleEyesGlobal.styleManager._locationNavigation;
+    const awareness = window.__eagleEyesGlobal.dataManager.layers.get('military-awareness')?.module;
     window.__qaCockpitReset = {
       calls: 0,
       original: manager.resetToGlobeView,
@@ -2189,17 +2189,17 @@ try {
   await page.focus('#cockpit-reset-globe');
   await page.keyboard.press('Enter');
   await page.waitForFunction(
-    () => !window.__godsEyeView.styleManager.cockpitView.active,
+    () => !window.__eagleEyesGlobal.styleManager.cockpitView.active,
     { timeout: 6_000 },
   );
   await page.waitForFunction(() => {
-    const viewer = window.__godsEyeView.viewer;
+    const viewer = window.__eagleEyesGlobal.viewer;
     if (!viewer) return false;
     const height = viewer.camera.positionCartographic?.height;
     return Math.abs(height - 18_000_000) < 150_000;
   }, { timeout: 6_000 });
   const resetState = await page.evaluate(() => {
-    const gev = window.__godsEyeView;
+    const gev = window.__eagleEyesGlobal;
     const qa = window.__qaCockpitReset;
     const awareness = gev.dataManager.layers.get('military-awareness')?.module;
     const subjectId = awareness?.getContextSnapshot?.()?.subject?.id || null;
@@ -2229,7 +2229,7 @@ try {
     [...localHttpErrors, ...consoleErrors].slice(0, 6).join(' | '));
 } finally {
   await page.evaluate(() => {
-    const manager = window.__godsEyeView?.styleManager;
+    const manager = window.__eagleEyesGlobal?.styleManager;
     const prior = window.__qaCockpitUtilityPrior;
     if (!manager || !prior) return;
     manager._setCockpitDisclosure('display', false);

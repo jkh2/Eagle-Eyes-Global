@@ -5,12 +5,13 @@ import {
   resolveVoiceModel,
   serializeCostLimits,
 } from './voiceCost.js';
+import { readMigratedStorage, writeProductStorage } from '../productStorage.js';
 
-// Voice cost control (repo-wide `godsEyeView.<feature>.<field>` convention;
-// the neighbouring ERROR_STORAGE_KEY predates it).
-export const VOICE_TIER_STORAGE_KEY = 'godsEyeView.voiceCost.tier';
+export const VOICE_TIER_STORAGE_KEY = 'eagleEyesGlobal.voiceCost.tier';
+export const LEGACY_VOICE_TIER_STORAGE_KEY = 'godsEyeView.voiceCost.tier';
 
-export const VOICE_LIMITS_STORAGE_KEY = 'godsEyeView.voiceCost.limits';
+export const VOICE_LIMITS_STORAGE_KEY = 'eagleEyesGlobal.voiceCost.limits';
+export const LEGACY_VOICE_LIMITS_STORAGE_KEY = 'godsEyeView.voiceCost.limits';
 
 /** Best-effort localStorage handle; absent in tests and locked-down browsers. */
 export function voiceStorage(storage) {
@@ -28,7 +29,11 @@ export function voiceStorage(storage) {
  */
 export function readStoredVoiceTier(storage) {
   try {
-    const raw = voiceStorage(storage)?.getItem(VOICE_TIER_STORAGE_KEY);
+    const raw = readMigratedStorage(
+      VOICE_TIER_STORAGE_KEY,
+      [LEGACY_VOICE_TIER_STORAGE_KEY],
+      voiceStorage(storage),
+    );
     return isKnownVoiceTier(raw)
       ? resolveVoiceModel(raw).tier
       : DEFAULT_VOICE_TIER;
@@ -41,7 +46,11 @@ export function readStoredVoiceTier(storage) {
 export function writeStoredVoiceTier(tier, storage) {
   const resolved = resolveVoiceModel(tier).tier;
   try {
-    voiceStorage(storage)?.setItem(VOICE_TIER_STORAGE_KEY, resolved);
+    writeProductStorage(
+      VOICE_TIER_STORAGE_KEY,
+      resolved,
+      voiceStorage(storage),
+    );
   } catch {
     /* best effort */
   }
@@ -54,7 +63,11 @@ export function writeStoredVoiceTier(tier, storage) {
  */
 export function readStoredVoiceLimits(storage) {
   try {
-    const raw = voiceStorage(storage)?.getItem(VOICE_LIMITS_STORAGE_KEY);
+    const raw = readMigratedStorage(
+      VOICE_LIMITS_STORAGE_KEY,
+      [LEGACY_VOICE_LIMITS_STORAGE_KEY],
+      voiceStorage(storage),
+    );
     if (!raw) return normalizeCostLimits(null);
     return normalizeCostLimits(JSON.parse(raw));
   } catch {
@@ -73,9 +86,10 @@ export function readStoredVoiceLimits(storage) {
 export function writeStoredVoiceLimits(limits, storage) {
   const normalized = normalizeCostLimits(limits);
   try {
-    voiceStorage(storage)?.setItem(
+    writeProductStorage(
       VOICE_LIMITS_STORAGE_KEY,
       JSON.stringify(serializeCostLimits(normalized)),
+      voiceStorage(storage),
     );
   } catch {
     /* best effort */

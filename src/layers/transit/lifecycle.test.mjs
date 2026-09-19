@@ -643,7 +643,7 @@ test('a snapshot the proxy replayed from its own cache for six minutes is refuse
   // not the same as the buses being where they say.
   app.serve('mbta', () => ({
     status: 200,
-    headers: { 'x-gev-cache': 'STALE-ERROR' },
+    headers: { 'x-eagle-eyes-cache': 'STALE-ERROR' },
     body: snapshot('mbta', 'MBTA', vehicles, { fetchedAt }),
   }));
   for (let tick = 0; tick < 24; tick += 1) {

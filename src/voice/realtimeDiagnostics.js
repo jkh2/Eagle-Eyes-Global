@@ -1,12 +1,15 @@
+import { readMigratedStorage, writeProductStorage } from '../productStorage.js';
+
 export const ERROR_LOG_LIMIT = 30;
 
-export const ERROR_STORAGE_KEY = 'gev-realtime-errors';
+export const ERROR_STORAGE_KEY = 'eagle-eyes-global:realtime-errors';
+export const LEGACY_ERROR_STORAGE_KEY = 'gev-realtime-errors';
 
 export const DEBUG_LOG_URL = '/api/realtime/debug-log';
 
 export function createDebugSessionId() {
   const randomPart = Math.random().toString(36).slice(2, 10);
-  return `gev-${Date.now().toString(36)}-${randomPart}`;
+  return `eeg-${Date.now().toString(36)}-${randomPart}`;
 }
 
 export function postDebugLog(record) {
@@ -122,7 +125,10 @@ export function compactText(value, maxLength) {
 
 export function loadStoredErrors() {
   try {
-    const value = JSON.parse(localStorage.getItem(ERROR_STORAGE_KEY) || '[]');
+    const value = JSON.parse(
+      readMigratedStorage(ERROR_STORAGE_KEY, [LEGACY_ERROR_STORAGE_KEY]) ||
+        '[]',
+    );
     return Array.isArray(value) ? value.slice(0, ERROR_LOG_LIMIT) : [];
   } catch {
     return [];
@@ -131,7 +137,7 @@ export function loadStoredErrors() {
 
 export function storeErrors(errors) {
   try {
-    localStorage.setItem(
+    writeProductStorage(
       ERROR_STORAGE_KEY,
       JSON.stringify(errors.slice(0, ERROR_LOG_LIMIT)),
     );
@@ -177,7 +183,7 @@ export class RealtimeDiagnostics {
     this.errors.unshift(record);
     this.errors.length = Math.min(this.errors.length, ERROR_LOG_LIMIT);
     storeErrors(this.errors);
-    console.error('[GEV Realtime]', record);
+    console.error('[Eagle Eyes Realtime]', record);
     this.debugLog('error', record);
     this.setStatus('error', formatErrorForDisplay(record));
     return record;
@@ -202,7 +208,7 @@ export class RealtimeDiagnostics {
       debugLog: this.debugSink
         ? {
             endpoint: DEBUG_LOG_URL,
-            file: '.gev-logs/realtime-conversations.jsonl',
+            file: '.eagle-eyes-logs/realtime-conversations.jsonl',
             sessionId: this.sessionId,
           }
         : null,

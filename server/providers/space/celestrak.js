@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { promises as fsp } from 'node:fs';
+import { resolveProductStateDir } from '../../product-state-paths.js';
 import { celestrakTleUrl } from '../../../src/data/spaceProviderRequests.js';
 
 /**
@@ -22,7 +23,7 @@ import { celestrakTleUrl } from '../../../src/data/spaceProviderRequests.js';
  */
 export function celestrakProxy() {
   const TLE_TTL_MS = 6 * 3600_000;
-  const CACHE_DIR = path.join(process.cwd(), '.gev-cache');
+  const CACHE_DIR = resolveProductStateDir(process.cwd(), 'cache');
   const mem = new Map(); // group -> { at: epochMs, body: string }
   const inflight = new Map(); // group -> Promise<{at, body}|null>
 
@@ -56,7 +57,7 @@ export function celestrakProxy() {
       // descriptive User-Agent with a contact point.
       headers: {
         'User-Agent':
-          'gods-eye-view-celestrak-proxy/1.0 (+https://github.com/bilawalsidhu/gods-eye-view)',
+          'EagleEyesGlobal/0.2 (+https://github.com/jkh2/Eagle-Eyes-Global; derived from GodsEyeView)',
       },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

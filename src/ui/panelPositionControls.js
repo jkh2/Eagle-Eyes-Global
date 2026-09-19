@@ -1,4 +1,6 @@
 /** Own panel position preferences, viewport clamping and drag listeners. */
+import { readMigratedStorage, writeProductStorage } from '../productStorage.js';
+
 /** Versioned localStorage namespace prefix to invalidate stale panel layouts. */
 const PANEL_LAYOUT_STORAGE_VERSION = 'v6';
 /**
@@ -48,9 +50,10 @@ export class PanelPositionControls {
 
   _maybeNotifyLayoutReset() {
     try {
-      const marker = `godsEyeView.${PANEL_POSITION_STORAGE_VERSION}.layoutResetNotified`;
-      if (localStorage.getItem(marker)) return;
-      localStorage.setItem(marker, '1');
+      const marker = `eagleEyesGlobal.${PANEL_POSITION_STORAGE_VERSION}.layoutResetNotified`;
+      const legacyMarker = `godsEyeView.${PANEL_POSITION_STORAGE_VERSION}.layoutResetNotified`;
+      if (readMigratedStorage(marker, [legacyMarker])) return;
+      writeProductStorage(marker, '1');
       const hadOldPositions = Object.keys(localStorage).some((key) =>
         key.startsWith('godsEyeView.v6.panelPos.'),
       );
@@ -91,10 +94,18 @@ export class PanelPositionControls {
   }
 
   _panelStorageKey(panelId) {
+    return `eagleEyesGlobal.${PANEL_POSITION_STORAGE_VERSION}.panelPos.${panelId}`;
+  }
+
+  _legacyPanelStorageKey(panelId) {
     return `godsEyeView.${PANEL_POSITION_STORAGE_VERSION}.panelPos.${panelId}`;
   }
 
   _panelCollapseStorageKey(panelId) {
+    return `eagleEyesGlobal.${PANEL_LAYOUT_STORAGE_VERSION}.panelCollapsed.${panelId}`;
+  }
+
+  _legacyPanelCollapseStorageKey(panelId) {
     return `godsEyeView.${PANEL_LAYOUT_STORAGE_VERSION}.panelCollapsed.${panelId}`;
   }
 
@@ -105,7 +116,9 @@ export class PanelPositionControls {
     let stored = null;
     if (allowStored) {
       try {
-        stored = localStorage.getItem(this._panelCollapseStorageKey(panelId));
+        stored = readMigratedStorage(this._panelCollapseStorageKey(panelId), [
+          this._legacyPanelCollapseStorageKey(panelId),
+        ]);
         if (stored === '1') collapsed = true;
         if (stored === '0') collapsed = false;
       } catch {
@@ -127,7 +140,7 @@ export class PanelPositionControls {
 
   _savePanelCollapsedState(panelId, collapsed) {
     try {
-      localStorage.setItem(
+      writeProductStorage(
         this._panelCollapseStorageKey(panelId),
         collapsed ? '1' : '0',
       );
@@ -146,7 +159,9 @@ export class PanelPositionControls {
 
   _restorePanelPosition(panelId, panelEl) {
     try {
-      const raw = localStorage.getItem(this._panelStorageKey(panelId));
+      const raw = readMigratedStorage(this._panelStorageKey(panelId), [
+        this._legacyPanelStorageKey(panelId),
+      ]);
       if (!raw) return;
       const pos = JSON.parse(raw);
       if (!pos || typeof pos.left !== 'number' || typeof pos.top !== 'number')
@@ -183,7 +198,7 @@ export class PanelPositionControls {
   _savePanelPosition(panelId, panelEl) {
     const rect = panelEl.getBoundingClientRect();
     try {
-      localStorage.setItem(
+      writeProductStorage(
         this._panelStorageKey(panelId),
         JSON.stringify({
           left: Math.round(rect.left),

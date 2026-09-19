@@ -100,7 +100,7 @@ export function createApplicationTools({
   // loop burning behind a hidden tab. (perf wave 2 fix)
   syncVisibilitySuspension();
 
-  window.__godsEyeView = {
+  const debug = {
     viewer,
     styleManager,
     tileset,
@@ -114,9 +114,25 @@ export function createApplicationTools({
     surfaceServices: operations.surface,
     requestRender: governorRequestRender,
   };
-  const debug = window.__godsEyeView;
+  window.__eagleEyesGlobal = debug;
+  // One-transition read compatibility for existing extensions and saved QA
+  // tooling. The legacy name is a getter, not a second mutable namespace.
+  let warnedLegacyDebugHandle = false;
+  Object.defineProperty(window, '__godsEyeView', {
+    configurable: true,
+    get: () => {
+      if (!warnedLegacyDebugHandle) {
+        warnedLegacyDebugHandle = true;
+        console.warn(
+          'window.__godsEyeView is deprecated; use window.__eagleEyesGlobal.',
+        );
+      }
+      return window.__eagleEyesGlobal;
+    },
+  });
   defer(() => {
-    if (window.__godsEyeView === debug) delete window.__godsEyeView;
+    if (window.__eagleEyesGlobal === debug) delete window.__eagleEyesGlobal;
+    delete window.__godsEyeView;
   });
   const voiceCommands = initGevVoiceCommands({
     ...voice,

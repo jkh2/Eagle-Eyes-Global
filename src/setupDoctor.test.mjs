@@ -135,10 +135,10 @@ test('Pinokio-scoped diagnosis does not count dotenv values shadowed by blank ap
 test('doctor reads the dotenv ladder without requiring Vite to be installed', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'gev-doctor-'));
   try {
-    writeFileSync(path.join(root, '.env'), 'GEV_TEST_KEY=base\n');
-    writeFileSync(path.join(root, '.env.local'), 'GEV_TEST_KEY=local\n');
-    writeFileSync(path.join(root, '.env.development.local'), 'GEV_TEST_KEY=mode-local\n');
-    assert.equal(readDoctorDotenvValue('GEV_TEST_KEY', root), 'mode-local');
+    writeFileSync(path.join(root, '.env'), 'EEG_TEST_KEY=base\n');
+    writeFileSync(path.join(root, '.env.local'), 'EEG_TEST_KEY=local\n');
+    writeFileSync(path.join(root, '.env.development.local'), 'EEG_TEST_KEY=mode-local\n');
+    assert.equal(readDoctorDotenvValue('EEG_TEST_KEY', root), 'mode-local');
     assert.equal(readDoctorDotenvValue('not valid', root), '');
   } finally {
     rmSync(root, { recursive: true, force: true });

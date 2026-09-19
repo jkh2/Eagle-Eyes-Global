@@ -5,7 +5,7 @@
 // that spec, with two real corrections found by inspecting live API
 // responses rather than assuming field names from documentation:
 //
-// 1. Upstream GEV has NO existing EONET or WFIGS fetch/parse code to wrap —
+// 1. Upstream Eagle Eyes has NO existing EONET or WFIGS fetch/parse code to wrap —
 //    it only has NASA FIRMS (a different system: satellite hotspot
 //    detection, no incident-level metadata). Grok's spec assumed a
 //    wrap-only path ("do not invent a third HTTP client"); that path isn't

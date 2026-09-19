@@ -23,8 +23,8 @@ const PROVIDER_FIELDS = [
   'LL2_API_TOKEN',
 ];
 const RATE_LIMIT_FIELDS = [
-  'GEV_RATELIMIT_OPENAI_PER_MIN',
-  'GEV_RATELIMIT_GOOGLE_PER_MIN',
+  'EEG_RATELIMIT_OPENAI_PER_MIN',
+  'EEG_RATELIMIT_GOOGLE_PER_MIN',
 ];
 const APP_VALUE_FIELDS = [...PROVIDER_FIELDS, ...RATE_LIMIT_FIELDS];
 const SHARING_FIELDS = [
@@ -56,7 +56,7 @@ test('Pinokio start has one fail-closed launcher process', () => {
   );
   assert.equal(
     script.run[0].params.env.PINOKIO_SHARE_VAR,
-    '{{env.PINOKIO_SHARE_VAR || "__gev_sharing_disabled__"}}',
+    '{{env.PINOKIO_SHARE_VAR || "__eagle_eyes_sharing_disabled__"}}',
   );
 });
 
@@ -141,7 +141,7 @@ test('Pinokio menu resolves the nested install marker and exposes each lifecycle
     running: 'start.js',
     url: 'http://127.0.0.1:4173/',
   }), [
-    { text: "Open God's Eye View", href: 'http://127.0.0.1:4173/', default: true },
+    { text: "Open Eagle Eyes Global", href: 'http://127.0.0.1:4173/', default: true },
     { text: 'Server', href: 'start.js', default: false },
   ]);
   assert.ok(existsCalls.length >= 7);
@@ -234,6 +234,6 @@ test('Pinokio keeps the supported local.url readiness key while disabling its sh
   assert.match(menuSource, /local\?\.url/);
   assert.equal(
     script.run[0].params.env.PINOKIO_SHARE_VAR,
-    '{{env.PINOKIO_SHARE_VAR || "__gev_sharing_disabled__"}}',
+    '{{env.PINOKIO_SHARE_VAR || "__eagle_eyes_sharing_disabled__"}}',
   );
 });

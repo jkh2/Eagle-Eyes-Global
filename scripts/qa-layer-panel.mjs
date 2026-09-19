@@ -24,11 +24,11 @@ try {
     { waitUntil: 'domcontentloaded' },
   );
   await page.waitForFunction(
-    () => window.__godsEyeView?.dataManager?._layerPanel,
+    () => window.__eagleEyesGlobal?.dataManager?._layerPanel,
     { timeout: 60000 },
   );
   const results = await page.evaluate(async () => {
-    const manager = window.__godsEyeView.dataManager;
+    const manager = window.__eagleEyesGlobal.dataManager;
     const container = manager._toggleContainer;
     const id = 'qa-panel-lifecycle';
     let listener = null;
@@ -82,7 +82,7 @@ try {
         'feed state reflects the settled layer snapshot',
         row().querySelector('.data-toggle-btn').dataset.feedState === 'stale',
       ]);
-      const ui = window.__godsEyeView.styleManager;
+      const ui = window.__eagleEyesGlobal.styleManager;
       ui._clearSelectedLayersBtn.click();
       result.push([
         'native clear activation presents busy state',
