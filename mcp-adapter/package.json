@@ -1,0 +1,19 @@
+{
+  "name": "eagle-eyes-global-mcp-adapter",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Read-only MCP query surface over Eagle Eyes Global's live geospatial sources — the agent-facing sibling of the Cesium globe UI. Current sources: USGS earthquakes and NASA EONET + NIFC WFIGS fires.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24.14.0 <25 || >=26 <27"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node scripts/run-tests.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^3.23.0"
+  }
+}
