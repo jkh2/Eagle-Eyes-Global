@@ -83,13 +83,23 @@ npm start
 
 Tools:
 
+- `get_observation`
 - `get_source_status`
 - `observe_region`
+- `open_in_globe`
 
 Current source IDs:
 
-- `usgs_earthquakes`
-- `nasa_eonet_wfigs_fires`
+- `usgs-earthquakes`
+- `fires`
+
+`get_observation` and `open_in_globe` address only records already selected and
+returned by `observe_region` in the same server session. A globe handoff is
+human-opened and unsigned. It renders one session-local point plus the packet's
+rectangle labeled as a bounding box, not a perimeter; it does not fetch,
+refresh, enable a persistent layer, control a running globe, or claim that a
+nearby FIRMS hotspot is the same EONET/WFIGS incident. Set `EEG_GLOBE_ORIGIN`
+to the browser origin when it is not `http://localhost:4173/`.
 
 The green unit suite is deterministic and does not require live network
 access. `probe:live` is an explicit integration check, not part of the default

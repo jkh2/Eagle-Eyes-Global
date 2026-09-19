@@ -10,10 +10,9 @@
 // Grok Sentinel, authorized by James Harwood.
 //
 // Current scope: two sources (USGS earthquakes and NASA EONET + NIFC WFIGS
-// fires), two tools (get_source_status, observe_region). Additional tools
-// (nearby_observations, get_observation, open_in_globe) land after this
-// slice is reviewed and proven, per the plan's own "prove it before
-// generalizing" discipline.
+// fires), plus four read-only tools. get_observation and open_in_globe only
+// address records already returned by observe_region in this server session;
+// neither performs a hidden upstream search or controls a running globe.
 //
 // Revised per Orion Sentinel's round-3 transport authorization (2026-09-18):
 // caps aligned with the source layer (500km/50), the real MCP call signal is
@@ -35,6 +34,7 @@ import {
   haversineKm,
   SOURCE_STATE,
 } from './evidenceEnvelope.mjs';
+import { buildGlobeHandoffUrl } from './evidenceHandoff.mjs';
 
 /** These two caps are the single source of truth for both the source layer
  * (sources/earthquakes.mjs) and this transport layer's input schema — do not
@@ -52,9 +52,33 @@ function defaultSources() {
   return { [earthquakes.id]: earthquakes, [fires.id]: fires };
 }
 
-export function createServer({ sources = defaultSources() } = {}) {
+export function createServer({
+  sources = defaultSources(),
+  globeOrigin = process.env.EEG_GLOBE_ORIGIN ?? 'http://localhost:4173/',
+} = {}) {
   const SOURCES = sources;
   const sourceIds = Object.keys(SOURCES);
+  const recentObservations = new Map();
+  const recentObservationCap = 500;
+
+  function observationKey(sourceId, sourceRecordId) {
+    return `${sourceId}\u0000${sourceRecordId}`;
+  }
+
+  function rememberObservation(sourceId, envelope) {
+    const key = observationKey(sourceId, envelope.source_record_id);
+    recentObservations.delete(key);
+    recentObservations.set(key, envelope);
+    while (recentObservations.size > recentObservationCap) {
+      recentObservations.delete(recentObservations.keys().next().value);
+    }
+  }
+
+  function findRecentObservation(sourceId, sourceRecordId) {
+    return (
+      recentObservations.get(observationKey(sourceId, sourceRecordId)) ?? null
+    );
+  }
 
   const server = new McpServer({
     name: 'eagle-eyes-global-geo',
@@ -86,7 +110,9 @@ export function createServer({ sources = defaultSources() } = {}) {
       },
     },
     async () => {
-      const result = { sources: Object.values(SOURCES).map((s) => s.getStatus()) };
+      const result = {
+        sources: Object.values(SOURCES).map((s) => s.getStatus()),
+      };
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
         structuredContent: result,
@@ -109,7 +135,10 @@ export function createServer({ sources = defaultSources() } = {}) {
       expires_at: z.string().nullable(),
       freshness_ms: z.number().nullable(),
       state: z.enum(Object.values(SOURCE_STATE)),
-      geometry: z.object({ lat: z.number(), lon: z.number() }).passthrough().nullable(),
+      geometry: z
+        .object({ lat: z.number(), lon: z.number() })
+        .passthrough()
+        .nullable(),
       attribution: z.string(),
       license: z.string(),
       limitations: z.array(z.string()),
@@ -122,14 +151,104 @@ export function createServer({ sources = defaultSources() } = {}) {
     source_id: z.string(),
     outcome: z.enum(['observations', 'observed_zero', 'source_unavailable']),
     state: z.enum(Object.values(SOURCE_STATE)),
-    matched_count: z.number().int().nonnegative().describe(
-      'Candidates returned by this source after its own source-level bounds; not an uncapped upstream total',
-    ),
-    returned_count: z.number().int().nonnegative().describe(
-      'Candidates from this source retained after the cross-source global result cap',
-    ),
+    matched_count: z
+      .number()
+      .int()
+      .nonnegative()
+      .describe(
+        'Candidates returned by this source after its own source-level bounds; not an uncapped upstream total',
+      ),
+    returned_count: z
+      .number()
+      .int()
+      .nonnegative()
+      .describe(
+        'Candidates from this source retained after the cross-source global result cap',
+      ),
     note: z.string().nullable(),
   });
+
+  const observationLookupInput = () => ({
+    source: z.enum(sourceIds.length > 0 ? sourceIds : ['__none__']),
+    source_record_id: z.string().min(1).max(512),
+  });
+
+  server.registerTool(
+    'get_observation',
+    {
+      title: 'Get recent observation',
+      description:
+        'Return the exact evidence envelope previously returned by observe_region in this MCP server session. Does not perform an unbounded upstream search; call observe_region first.',
+      inputSchema: observationLookupInput(),
+      outputSchema: {
+        found: z.boolean(),
+        observation: evidenceEnvelopeShape.nullable(),
+        empty_reason: z.enum(Object.values(EMPTY_REASON)).nullable(),
+      },
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async ({ source, source_record_id }) => {
+      const observation = findRecentObservation(source, source_record_id);
+      const result = observation
+        ? { found: true, observation, empty_reason: null }
+        : {
+            found: false,
+            observation: null,
+            empty_reason: EMPTY_REASON.NOT_QUERIED,
+          };
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        structuredContent: result,
+      };
+    },
+  );
+
+  server.registerTool(
+    'open_in_globe',
+    {
+      title: 'Prepare globe handoff',
+      description:
+        'Create a human-opened globe URL for the exact cached evidence envelope previously returned by observe_region. The URL carries an unsigned labeled snapshot, a session-local point and bounding box, and a camera position; it never controls a running globe or substitutes a nearby record.',
+      inputSchema: observationLookupInput(),
+      outputSchema: {
+        found: z.boolean(),
+        url: z.string().nullable(),
+        observation: evidenceEnvelopeShape.nullable(),
+        empty_reason: z.enum(Object.values(EMPTY_REASON)).nullable(),
+      },
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async ({ source, source_record_id }) => {
+      const observation = findRecentObservation(source, source_record_id);
+      const result = observation
+        ? {
+            found: true,
+            url: buildGlobeHandoffUrl(observation, globeOrigin),
+            observation,
+            empty_reason: null,
+          }
+        : {
+            found: false,
+            url: null,
+            observation: null,
+            empty_reason: EMPTY_REASON.NOT_QUERIED,
+          };
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        structuredContent: result,
+      };
+    },
+  );
 
   server.registerTool(
     'observe_region',
@@ -147,16 +266,25 @@ export function createServer({ sources = defaultSources() } = {}) {
           .array(z.enum(sourceIds.length > 0 ? sourceIds : ['__none__']))
           .min(1)
           .default(sourceIds),
-        max_results: z.number().int().positive().max(MAX_RESULTS_CAP).default(MAX_RESULTS_CAP),
+        max_results: z
+          .number()
+          .int()
+          .positive()
+          .max(MAX_RESULTS_CAP)
+          .default(MAX_RESULTS_CAP),
         min_acres: z
           .number()
           .min(0)
           .optional()
-          .describe('Fires only: exclude fires smaller than this. Ignored by sources that have no acreage concept.'),
+          .describe(
+            'Fires only: exclude fires smaller than this. Ignored by sources that have no acreage concept.',
+          ),
         include_prescribed: z
           .boolean()
           .optional()
-          .describe('Fires only: include prescribed/RX burns (excluded by default). Ignored by other sources.'),
+          .describe(
+            'Fires only: include prescribed/RX burns (excluded by default). Ignored by other sources.',
+          ),
       },
       outputSchema: {
         observations: z.array(evidenceEnvelopeShape),
@@ -175,7 +303,17 @@ export function createServer({ sources = defaultSources() } = {}) {
         openWorldHint: true,
       },
     },
-    async ({ center, radius_km, sources, max_results, min_acres, include_prescribed }, extra) => {
+    async (
+      {
+        center,
+        radius_km,
+        sources,
+        max_results,
+        min_acres,
+        include_prescribed,
+      },
+      extra,
+    ) => {
       extra.signal?.throwIfAborted();
       const candidates = [];
       const sourceResults = [];
@@ -263,9 +401,14 @@ export function createServer({ sources = defaultSources() } = {}) {
             ),
         )
         .slice(0, max_results);
+      for (const item of selected)
+        rememberObservation(item.sourceId, item.envelope);
       const returnedBySource = new Map();
       for (const item of selected) {
-        returnedBySource.set(item.sourceId, (returnedBySource.get(item.sourceId) ?? 0) + 1);
+        returnedBySource.set(
+          item.sourceId,
+          (returnedBySource.get(item.sourceId) ?? 0) + 1,
+        );
       }
       const completedSourceResults = sourceResults.map((result) => ({
         ...result,
@@ -273,7 +416,9 @@ export function createServer({ sources = defaultSources() } = {}) {
       }));
       const partial =
         anySourceUnavailable &&
-        completedSourceResults.some((result) => result.outcome !== 'source_unavailable');
+        completedSourceResults.some(
+          (result) => result.outcome !== 'source_unavailable',
+        );
 
       if (selected.length > 0) {
         const result = {
@@ -321,7 +466,10 @@ export function createServer({ sources = defaultSources() } = {}) {
 // (which spawns `server.mjs` as a real child process) fail with "MCP error
 // -32000: Connection closed" — the child had already exited before the
 // client's stdio handshake could complete.
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
   const server = createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);

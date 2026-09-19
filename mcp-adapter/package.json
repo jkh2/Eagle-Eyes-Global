@@ -10,7 +10,8 @@
   },
   "scripts": {
     "start": "node server.mjs",
-    "test": "node scripts/run-tests.mjs"
+    "test": "node scripts/run-tests.mjs",
+    "probe:live": "node live-probe.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

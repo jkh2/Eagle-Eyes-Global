@@ -1,0 +1,117 @@
+.evidence-handoff {
+  position: fixed;
+  z-index: 1300;
+  top: 76px;
+  right: 20px;
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 96px);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 18px;
+  border: 1px solid rgba(76, 221, 255, 0.58);
+  border-radius: 10px;
+  background: rgba(4, 12, 18, 0.96);
+  box-shadow:
+    0 14px 44px rgba(0, 0, 0, 0.58),
+    0 0 24px rgba(42, 194, 226, 0.12);
+  color: #e9f8fb;
+  font-family: var(--font-mono);
+  line-height: 1.45;
+}
+
+.evidence-handoff--expired,
+.evidence-handoff--invalid {
+  border-color: rgba(255, 179, 71, 0.78);
+}
+
+.evidence-handoff__close {
+  float: right;
+  min-width: 44px;
+  min-height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  cursor: pointer;
+}
+
+.evidence-handoff__close:focus-visible {
+  outline: 2px solid #58dbf5;
+  outline-offset: 2px;
+}
+
+.evidence-handoff__eyebrow {
+  margin-right: 64px;
+  color: #58dbf5;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.evidence-handoff--expired .evidence-handoff__eyebrow,
+.evidence-handoff--invalid .evidence-handoff__eyebrow {
+  color: #ffb347;
+}
+
+.evidence-handoff__title {
+  margin: 8px 0 4px;
+  font-family: inherit;
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.evidence-handoff__facts,
+.evidence-handoff__notice,
+.evidence-handoff__footnote {
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+.evidence-handoff__notice {
+  padding: 9px;
+  border-left: 3px solid #ffb347;
+  background: rgba(255, 179, 71, 0.1);
+}
+
+.evidence-handoff__details {
+  display: grid;
+  grid-template-columns: minmax(82px, auto) 1fr;
+  gap: 5px 12px;
+  margin: 14px 0;
+  font-size: 11px;
+}
+
+.evidence-handoff__details dt {
+  color: rgba(164, 226, 239, 0.75);
+}
+
+.evidence-handoff__details dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.evidence-handoff__subhead {
+  margin: 12px 0 4px;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.evidence-handoff__limitations {
+  margin: 6px 0 10px;
+  padding-left: 20px;
+  font-size: 11px;
+}
+
+.evidence-handoff__footnote {
+  color: rgba(233, 248, 251, 0.7);
+}
+
+@media (max-width: 640px) {
+  .evidence-handoff {
+    top: 62px;
+    right: 10px;
+    max-height: calc(100vh - 76px);
+  }
+}

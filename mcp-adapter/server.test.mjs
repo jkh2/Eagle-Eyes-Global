@@ -22,7 +22,12 @@ function fakeSource({ id = 'fake-source', envelopes = [], throwOn } = {}) {
       return envelopes;
     },
     getStatus() {
-      return { id, state: SOURCE_STATE.LIVE, last_success_at: new Date().toISOString(), note: null };
+      return {
+        id,
+        state: SOURCE_STATE.LIVE,
+        last_success_at: new Date().toISOString(),
+        note: null,
+      };
     },
   };
 }
@@ -50,26 +55,128 @@ function fakeEnvelope(overrides = {}) {
  * InMemoryTransport — genuine protocol round-trips (JSON-RPC, schema
  * validation) with no subprocess and no network. */
 async function connectedClient(server) {
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const [clientTransport, serverTransport] =
+    InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'test-client', version: '0.1.0' });
-  await Promise.all([client.connect(clientTransport), server.connect(serverTransport)]);
+  await Promise.all([
+    client.connect(clientTransport),
+    server.connect(serverTransport),
+  ]);
   return client;
 }
 
-test('lists exactly the two current read-only tools', async () => {
+test('lists exactly the four current read-only tools', async () => {
   const server = createServer({ sources: {} });
   const client = await connectedClient(server);
   const { tools } = await client.listTools();
-  assert.deepEqual(
-    tools.map((t) => t.name).sort(),
-    ['get_source_status', 'observe_region'],
+  assert.deepEqual(tools.map((t) => t.name).sort(), [
+    'get_observation',
+    'get_source_status',
+    'observe_region',
+    'open_in_globe',
+  ]);
+});
+
+test('get_observation returns the exact envelope selected by observe_region', async () => {
+  const envelope = fakeEnvelope({
+    sourceRecordId: 'remember-me',
+    observation: { kind: 'fake', nested: { retained: true } },
+  });
+  const server = createServer({
+    sources: { a: fakeSource({ id: 'a', envelopes: [envelope] }) },
+  });
+  const client = await connectedClient(server);
+  await client.callTool({
+    name: 'observe_region',
+    arguments: { center: { lat: 0, lon: 0 }, radius_km: 10 },
+  });
+  const result = await client.callTool({
+    name: 'get_observation',
+    arguments: { source: 'a', source_record_id: 'remember-me' },
+  });
+  const parsed = JSON.parse(result.content[0].text);
+  assert.deepEqual(parsed, result.structuredContent);
+  assert.equal(parsed.found, true);
+  assert.deepEqual(parsed.observation, envelope);
+  assert.equal(parsed.empty_reason, null);
+});
+
+test('open_in_globe carries the exact cached envelope and never invents a nearby record', async () => {
+  const envelope = fakeEnvelope({
+    sourceRecordId: 'handoff-me',
+    geometry: { lat: 12.3456789, lon: -45.6789123 },
+  });
+  const server = createServer({
+    sources: { a: fakeSource({ id: 'a', envelopes: [envelope] }) },
+    globeOrigin: 'https://eagle.example/',
+  });
+  const client = await connectedClient(server);
+  await client.callTool({
+    name: 'observe_region',
+    arguments: { center: { lat: 12.3456789, lon: -45.6789123 }, radius_km: 10 },
+  });
+  const result = await client.callTool({
+    name: 'open_in_globe',
+    arguments: { source: 'a', source_record_id: 'handoff-me' },
+  });
+  const parsed = JSON.parse(result.content[0].text);
+  const url = new URL(parsed.url);
+  const packet = JSON.parse(
+    Buffer.from(
+      new URLSearchParams(url.hash.slice(1)).get('evidence'),
+      'base64url',
+    ).toString('utf8'),
   );
+  assert.equal(parsed.found, true);
+  assert.deepEqual(parsed.observation, envelope);
+  assert.deepEqual(packet.envelope, envelope);
+  assert.equal(new URLSearchParams(url.hash.slice(1)).get('lat'), '12.345679');
+});
+
+test('lookup tools fail closed before observe_region and for candidates dropped by the global cap', async () => {
+  const kept = fakeEnvelope({
+    sourceRecordId: 'kept',
+    geometry: { lat: 0.01, lon: 0 },
+  });
+  const dropped = fakeEnvelope({
+    sourceRecordId: 'dropped',
+    geometry: { lat: 1, lon: 0 },
+  });
+  const server = createServer({
+    sources: { a: fakeSource({ id: 'a', envelopes: [dropped, kept] }) },
+  });
+  const client = await connectedClient(server);
+
+  const before = await client.callTool({
+    name: 'open_in_globe',
+    arguments: { source: 'a', source_record_id: 'kept' },
+  });
+  assert.deepEqual(before.structuredContent, {
+    found: false,
+    url: null,
+    observation: null,
+    empty_reason: 'not_queried',
+  });
+
+  await client.callTool({
+    name: 'observe_region',
+    arguments: { center: { lat: 0, lon: 0 }, radius_km: 500, max_results: 1 },
+  });
+  const droppedLookup = await client.callTool({
+    name: 'get_observation',
+    arguments: { source: 'a', source_record_id: 'dropped' },
+  });
+  assert.equal(droppedLookup.structuredContent.found, false);
+  assert.equal(droppedLookup.structuredContent.empty_reason, 'not_queried');
 });
 
 test('get_source_status returns real registered-source status, matching structuredContent to content', async () => {
   const server = createServer({ sources: { a: fakeSource({ id: 'a' }) } });
   const client = await connectedClient(server);
-  const result = await client.callTool({ name: 'get_source_status', arguments: {} });
+  const result = await client.callTool({
+    name: 'get_source_status',
+    arguments: {},
+  });
   const parsed = JSON.parse(result.content[0].text);
   assert.deepEqual(parsed, result.structuredContent);
   assert.equal(parsed.sources.length, 1);
@@ -79,7 +186,9 @@ test('get_source_status returns real registered-source status, matching structur
 
 test('observe_region returns real envelopes when a source has data, structuredContent matches content', async () => {
   const envelope = fakeEnvelope();
-  const server = createServer({ sources: { a: fakeSource({ id: 'a', envelopes: [envelope] }) } });
+  const server = createServer({
+    sources: { a: fakeSource({ id: 'a', envelopes: [envelope] }) },
+  });
   const client = await connectedClient(server);
   const result = await client.callTool({
     name: 'observe_region',
@@ -104,7 +213,9 @@ test('observe_region returns real envelopes when a source has data, structuredCo
 });
 
 test('observe_region honest-empty: a genuinely failing source reports source_unavailable, not a fabricated empty', async () => {
-  const server = createServer({ sources: { a: fakeSource({ id: 'a', throwOn: 'unavailable' }) } });
+  const server = createServer({
+    sources: { a: fakeSource({ id: 'a', throwOn: 'unavailable' }) },
+  });
   const client = await connectedClient(server);
   const result = await client.callTool({
     name: 'observe_region',
@@ -175,11 +286,13 @@ test('observe_region applies the result cap after globally sorting all sources b
   assert.equal(parsed.observations.length, 1);
   assert.equal(parsed.observations[0].source_record_id, 'near');
   assert.deepEqual(
-    parsed.source_results.map(({ source_id, matched_count, returned_count }) => ({
-      source_id,
-      matched_count,
-      returned_count,
-    })),
+    parsed.source_results.map(
+      ({ source_id, matched_count, returned_count }) => ({
+        source_id,
+        matched_count,
+        returned_count,
+      }),
+    ),
     [
       { source_id: 'first', matched_count: 1, returned_count: 0 },
       { source_id: 'second', matched_count: 1, returned_count: 1 },
@@ -194,7 +307,9 @@ test('observe_region applies the result cap after globally sorting all sources b
 // below checks `isError` and the real message text, not `assert.rejects`.
 
 test('observe_region propagates a real AbortError as itself (its own honest message), never mistranslating cancellation into a fabricated source_unavailable JSON result', async () => {
-  const server = createServer({ sources: { a: fakeSource({ id: 'a', throwOn: 'abort' }) } });
+  const server = createServer({
+    sources: { a: fakeSource({ id: 'a', throwOn: 'abort' }) },
+  });
   const client = await connectedClient(server);
   const result = await client.callTool({
     name: 'observe_region',
@@ -220,7 +335,11 @@ test('the input schema rejects a radius above the 500km cap and a maxResults abo
 
   const overResults = await client.callTool({
     name: 'observe_region',
-    arguments: { center: { lat: 0, lon: 0 }, radius_km: 10, max_results: MAX_RESULTS_CAP + 1 },
+    arguments: {
+      center: { lat: 0, lon: 0 },
+      radius_km: 10,
+      max_results: MAX_RESULTS_CAP + 1,
+    },
   });
   assert.equal(overResults.isError, true);
   assert.match(overResults.content[0].text, /max_results/);
@@ -231,8 +350,16 @@ test('tool annotations declare this surface as read-only and non-destructive at 
   const client = await connectedClient(server);
   const { tools } = await client.listTools();
   for (const tool of tools) {
-    assert.equal(tool.annotations?.readOnlyHint, true, `${tool.name} must declare readOnlyHint`);
-    assert.equal(tool.annotations?.destructiveHint, false, `${tool.name} must declare destructiveHint: false`);
+    assert.equal(
+      tool.annotations?.readOnlyHint,
+      true,
+      `${tool.name} must declare readOnlyHint`,
+    );
+    assert.equal(
+      tool.annotations?.destructiveHint,
+      false,
+      `${tool.name} must declare destructiveHint: false`,
+    );
   }
 });
 
@@ -244,7 +371,11 @@ test('an unknown source id in the request is rejected at the schema layer, not s
   // to query a source id that was never registered.
   const result = await client.callTool({
     name: 'observe_region',
-    arguments: { center: { lat: 0, lon: 0 }, radius_km: 10, sources: ['nonexistent'] },
+    arguments: {
+      center: { lat: 0, lon: 0 },
+      radius_km: 10,
+      sources: ['nonexistent'],
+    },
   });
   assert.equal(result.isError, true);
 });
